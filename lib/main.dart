@@ -1,42 +1,50 @@
 import 'package:flutter/material.dart';
-import 'second_screen.dart'; // Import the new screen
+import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/onboarding_screen1.dart';
+import 'screens/get_started_screen.dart';
+import 'screens/enhanced_experience_screen.dart';
+import 'screens/visually_impaired_screen.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(BlindSafariApp());
 }
 
-class MyApp extends StatelessWidget {
+class BlindSafariApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Blind Safari',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(),
+      home: MainScreen(),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
+class MainScreen extends StatelessWidget {
+  Future<bool> _checkFirstRun() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool firstRun = prefs.getBool('first_run') ?? true;
+    if (firstRun) {
+      prefs.setBool('first_run', false);
+    }
+    return firstRun;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Home Screen'),
-      ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            // Navigate to the second screen
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SecondScreen()),
-            );
-          },
-          child: Text('Go to Second Screen'),
-        ),
-      ),
+    return FutureBuilder<bool>(
+      future: _checkFirstRun(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.data == true) {
+          return OnboardingScreen1();
+        } else {
+          return GetStartedScreen();
+        }
+      },
     );
   }
 }
